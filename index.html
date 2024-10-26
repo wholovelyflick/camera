@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Stream</title>
+    <script>
+        function updateTime() {
+            var now = new Date();
+            var time = now.toLocaleTimeString();
+            document.getElementById('current-time').innerText = time;
+        }
+        setInterval(updateTime, 1000);
+        function shutdown() {
+            fetch('/shutdown', { method: 'POST' })
+                .then(response => { if (response.ok) alert('Компьютер будет выключен.'); });
+        }
+        function openExplorer() {
+            fetch('/open_explorer', { method: 'POST' });
+        }
+        function sendCommand() {
+            const command = document.getElementById("command-input").value;
+            fetch('/execute_command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ command: command })
+            }).then(() => {
+                document.getElementById("command-input").value = '';
+                fetchCmdOutput();
+            });
+        }
+        function fetchCmdOutput() {
+            fetch('/get_cmd_output')
+                .then(response => response.text())
+                .then(data => { document.getElementById("cmd-output").innerText = data; });
+        }
+        setInterval(fetchCmdOutput, 2000);
+        function disconnectWifi() {
+            fetch('/disconnect_wifi', { method: 'POST' })
+                .then(response => { if (response.ok) alert('Отключение от Wi-Fi.'); });
+        }
+        function openUrl() {
+            const url = document.getElementById("url-input").value;
+            fetch('/open_url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ url: url })
+            }).then(() => {
+                document.getElementById("url-input").value = '';
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Video Stream</h1>
+    <div style="display: flex;">
+        <img src="/video_feed" width="640" height="480"/>
+        <div style="margin-left: 20px;">
+            <p>Имя пользователя: {{ username }}</p>
+            <p>Текущее время: <span id="current-time"></span></p>
+            <p>Локальный IP-адрес: {{ local_ip }}</p>
+            <p>Публичный IP-адрес: {{ public_ip }}</p>
+            <p>Информация о Wi-Fi:</p>
+            <pre>{{ wifi_info }}</pre>
+            <p>Информация о местоположении по IP:</p>
+            <pre>{{ ip_info }}</pre>
+            <div>
+                <button onclick="shutdown()">Выключить компьютер</button>
+                <button onclick="openExplorer()">Открыть проводник</button>
+                <button onclick="disconnectWifi()">Отключить от Wi-Fi</button>
+                <input type="text" id="url-input" placeholder="Введите URL">
+                <button onclick="openUrl()">Открыть URL</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
